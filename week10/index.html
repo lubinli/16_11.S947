@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>I'm Learning D3</title>
+	<!-- You will load the D3 library here. -->
+	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+	<style>
+	text {
+		font-family: "Open Sans", sans-serif;
+		font-size: 12px;
+	}
+	</style>
+
+</head>
+<body>
+	
+	<script>
+		//Our D3 code will go here. -->
+		var ratData = [];
+
+		d3.csv("data/rat-data.csv", function(d) {
+			return {
+				city : d.city, // city name
+				rats : +d.rats // force value of rats to be number (+)
+			};
+		}, function(error, rows) { // catch error if error, read rows
+			ratData = rows; // set ratData equal to rows
+			console.log(ratData); //prints the JSON file, for debugging
+			createVisualization(); // call function to create chart. So we want all the chart-creating code below to be within this new function
+		});
+
+		function createVisualization() {
+
+		// Width and height of SVG
+		var w = 150;
+		var h = 175;
+
+		// Get length of dataset
+		var arrayLength = ratData.length; // length of dataset
+		var maxValue = d3.max(ratData, function(d) { return +d.rats;} ); // get max value of our dataset. + in front of d forces d to be a numeric value
+		var x_axisLength = 100; // length of x-axis in our layout
+		var y_axisLength = 100; // length of y-axis in our layout
+
+		var yScale = d3.scale.linear()
+		.domain([0, maxValue])
+		.range([0, y_axisLength]);
+
+		//Create SVG element
+		var svg = d3.select("body")
+			.append("svg")
+			.attr("width", w)
+			.attr("height", h);
+
+		// Select and generate rectangle elements
+		svg.selectAll( "rect" ) //we selected a bunch of rectangles that don't exist yet
+			.data( ratData ) //We bind the data to our empty selection using the data() method, it will return the four data values in our dataset
+			.enter() //creates placeholders for each data element for which no corresponding DOM element was found
+			.append("rect") // insert a rectangle into each of the placeholders that do not have a "rect" element, which is all of them
+			.attr( "x", function(d,i){ //i = index of the data array. e.g. 0 for 1st item; 1 for 2nd item
+				return i * (x_axisLength/arrayLength) + 30; // Set x coord of rect using length of array. 
+			})
+			.attr( "y", function(d){
+				return h - yScale(d.rats) - 75; // Set y coordinate of rect using the y scale
+			})
+			.attr( "width", (x_axisLength/arrayLength) - 1) // Set bar width using length of array, leave gap of 1px between rect
+			.attr( "height", function(d){
+				return yScale(d.rats); // Set height of using the scale
+			})
+			.attr( "fill", "steelblue")
+			.on("mouseover", function(d){
+				return tooltip.style("visibility", "visible").text(d.city + ": " + d.rats);
+			})
+			.on("mousemove", function(d){
+				return tooltip.style("top", (event.pageY-10)+"px").style("left",(event.pageX+10)+"px").text(d.city + ": " + d.rats);
+			})
+			.on("mouseout", function(d){
+				return tooltip.style("visibility", "hidden");
+			});
+
+// Create y-axis
+svg.append("line")
+	.attr("x1", 30)
+	.attr("y1", 0)
+	.attr("x2", 30)
+	.attr("y2", 100)
+	.attr("stroke-width", 2)
+	.attr("stroke", "black");
+
+// Create x-axis
+svg.append("line")
+	.attr("x1", 30)
+	.attr("y1", 100)
+	.attr("x2", 130)
+	.attr("y2", 100)
+	.attr("stroke-width", 2)
+	.attr("stroke", "black");
+
+// Add a Label
+// y-axis label
+svg.append("text")
+	.attr("class", "y label")
+	.attr("text-anchor", "end")
+	.text("No. of Rats")
+	.attr("transform", "translate(20, 20) rotate(-90)");
+
+	// Create Tooltip and set it to be hidden	
+var tooltip = d3.select("body")
+	.append("div")
+	.style("position", "absolute")
+	.style("font-family", "'Open Sans', sans-serif")
+	.style("font-size", "12px")
+	.style("z-index", "10")
+	.style("visibility", "hidden");
+
+}
+</script>	
+</body>
+</html>
